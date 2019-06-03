@@ -1,0 +1,73 @@
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: receiver
+          uri: lb://receiver
+          predicates:
+            - Path= /receiver/**
+          filters:
+            - StripPrefix=1
+            - SecureHeaders
+            - name: Hystrix
+              args:
+                name: logcenterGatewayCommand
+                fallbackUri: forward:/hystrixTimeout
+        - id: updater
+          uri: lb://updater
+          predicates:
+            - Path= /updater/**
+          filters:
+            - StripPrefix=1
+            - SecureHeaders
+            - name: Hystrix
+              args:
+                name: updaterGatewayCommand
+                fallbackUri: forward:/hystrixTimeout
+    consul:
+      host: 127.0.0.1
+      port: 8500
+      discovery:
+        healthCheckPath: /actuator/health
+        healthCheckInterval: 30s
+        instance-id: audit-center-gateway
+        register: false
+  application:
+    name: audit-center-gateway
+
+
+server:
+  port: 9080
+
+logging:
+  path: ${user.dir}/logs
+  level:
+    access: info
+    root: info
+
+audit-center-receiver:
+  ribbon:
+    ServerListRefreshInterval: 1000
+audit-center-updater:
+  ribbon:
+    ServerListRefreshInterval: 1000
+
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 5000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always

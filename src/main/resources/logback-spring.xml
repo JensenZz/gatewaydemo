@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<configuration>
+
+    <!--logback jmx-->
+    <jmxConfigurator/>
+
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+
+    <!--日志路径-->
+    <property name="LOG_PATH" value="${LOG_PATH:-logs}"/>
+
+    <!-- 控制台日志 -->
+    <appender name="stdout-appender" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%thread|%d{yyyy-MM-dd HH:mm:ss.SSS}[%X{requestId}]|%msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="default" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <encoder>
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符-->
+            <pattern>%thread|%d{yyyy-MM-dd HH:mm:ss.SSS}[%X{requestId}]|%msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!--日志文件输出的文件名-->
+            <FileNamePattern>${LOG_PATH}/default-%d{yyyyMMdd}-%i.log</FileNamePattern>
+            <MaxHistory>100</MaxHistory>
+            <MaxFileSize>100MB</MaxFileSize>
+        </rollingPolicy>
+    </appender>
+
+    <appender name="default-async" class="ch.qos.logback.classic.AsyncAppender">
+        <!-- 不丢失日志.默认的,如果队列的80%已满,则会丢弃TRACT、DEBUG、INFO级别的日志 -->
+        <discardingThreshold>0</discardingThreshold>
+        <!-- 更改默认的队列的深度,该值会影响性能.默认值为200000 -->
+        <queueSize>200000</queueSize>
+        <!-- 添加附加的appender,最多只能添加一个 -->
+        <appender-ref ref="default"/>
+    </appender>
+
+    <appender name="access" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <encoder>
+            <pattern>%thread|%d{yyyy-MM-dd HH:mm:ss.SSS}[%X{requestId}]|%msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!--日志文件输出的文件名-->
+            <FileNamePattern>${LOG_PATH}/access-%d{yyyyMMdd}-%i.log</FileNamePattern>
+            <MaxHistory>100</MaxHistory>
+            <MaxFileSize>100MB</MaxFileSize>
+        </rollingPolicy>
+    </appender>
+
+    <appender name="access-async" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>200000</queueSize>
+        <appender-ref ref="access"/>
+    </appender>
+
+    <logger name="access" level="${LOG_ROOT_LEVEL}" additivity="false">
+        <appender-ref ref="access-async"/>
+    </logger>
+
+    <!--default configuration-->
+    <root level="${LOG_ROOT_LEVEL}">
+        <appender-ref ref="stdout-appender"/>
+        <appender-ref ref="default-async"/>
+    </root>
+</configuration>
